@@ -1,0 +1,26 @@
+[project]
+name = "quetzal location demographics tool"
+version = "0.0.1"
+description = "django tool to visualize demographics for a specific location"
+authors = [
+    {name = "Elmer Camargo", email="elmer@tazacafe.us"}
+]
+license = "MIT license"
+requires-python = ">=3.8"
+
+keywords = ["small-business", "quetzal", "census", "demographics"]
+
+classifiers = [
+    "Topic :: Software Development"
+]
+
+[tool.poetry]
+name = "python census demographics tool"
+version = "0.0.1"
+description = "census wrapper to get demographics for a specific location"
+authors = [
+    {name = "Elmer Camargo", email="elmer@tazacafe.us"}
+]
+packages = [
+	{ include = "spatial_tools/census_api.py" },
+]
