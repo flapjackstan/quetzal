@@ -1,9 +1,9 @@
 [project]
-name = "quetzal location demographics tool"
+name = "Quetzal Analytic Tools"
 version = "0.0.1"
 description = "django tool to visualize demographics for a specific location"
 authors = [
-    {name = "Elmer Camargo", email="elmer@tazacafe.us"}
+    "Elmer Camargo <elmer@tazacafe.us>"
 ]
 license = "MIT license"
 requires-python = ">=3.8"
@@ -15,12 +15,15 @@ classifiers = [
 ]
 
 [tool.poetry]
-name = "python census demographics tool"
+name = "Quetzal Analytic Tools"
 version = "0.0.1"
 description = "census wrapper to get demographics for a specific location"
 authors = [
-    {name = "Elmer Camargo", email="elmer@tazacafe.us"}
+    "Elmer Camargo <elmer@tazacafe.us>"
 ]
 packages = [
 	{ include = "spatial_tools/census_api.py" },
 ]
+
+[tool.poetry.dependencies]
+python = "^3.8"
