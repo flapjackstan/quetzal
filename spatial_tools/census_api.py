@@ -89,26 +89,27 @@ la_fips = county_fips["Los Angeles"]
 lacounty_tracts = ca_tracts.query('COUNTYFP == @la_fips')
 
 #%%
-
-tract_map = lacounty_tracts.explore(name="LA County Tracts")
-tract_map.save("tracts.html")
-
-#%%
-
 airbnb_points = gpd.read_file("../datasci/mlr_airbnb/airbnb_points.geojson")
 
 #%%
 
-airbnb_map = airbnb_points.explore(name="Airbnb Locations")
+tract_map = lacounty_tracts.explore(name="LA County Tracts")
+tract_map.save("tracts.html")
+
+
+#%%
+
+airbnb_map = airbnb_points.explore(color="red", name="Airbnb Locations")
 airbnb_map.save("airbnb_points.html")
 
 #%% https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.explore.html
 
 tracts_and_points_map = lacounty_tracts.explore(m=airbnb_map, name="LA County Tracts")
+#%%
 
 folium.TileLayer('CartoDB positron', control=True).add_to(tracts_and_points_map)  # use folium to add alternative tiles
 folium.LayerControl().add_to(tracts_and_points_map)
-
+#%%
 tracts_and_points_map.save("points_and_polygons.html")
 
 
