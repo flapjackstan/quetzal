@@ -90,4 +90,5 @@ lacounty_tracts = ca_tracts.query('COUNTYFP == @la_fips')
 
 #%%
 
-lacounty_tracts.explore()
+tract_map = lacounty_tracts.explore()
+tract_map.save("tracts.html")
