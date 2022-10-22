@@ -30,9 +30,13 @@ python = "^3.9"
 GDAL = {path = "dependencies/GDAL-3.4.3-cp39-cp39-win_amd64.whl", develop = true}
 Fiona = {path = "dependencies/Fiona-1.8.21-cp39-cp39-win_amd64.whl", develop = true}
 geopandas = "^0.11.1"
+census = "^0.8.19"
+us = "^2"
+python-dotenv = "^0.21.0"
 
 [tool.poetry.group.dev.dependencies]
 spyder = "^5.3.3"
+pytest = "^7.1.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
