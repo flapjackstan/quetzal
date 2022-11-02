@@ -1,13 +1,15 @@
 from behave import *
+from analysis_tools.venmo import  
 
-@given('we have behave installed')
+@given('a string')
 def step_impl(context):
+    my_string = "+ 5.00"
     pass
 
-@when('we implement a test')
+@when('we pass the string to the function')
 def step_impl(context):
     assert True is not False
 
-@then('behave will test it for us!')
+@then('the string will be converted to a float')
 def step_impl(context):
     assert context.failed is False
