@@ -25,6 +25,10 @@ census = Census(CENSUS_API_KEY)
 
 #%%
 
+print(CENSUS_API_KEY)
+
+#%%
+
 # https://gist.github.com/cjwinchester/a8ff5dee9c07d161bdf4 
 # above contains code to get adjacent counties as well
 def getCounties():
