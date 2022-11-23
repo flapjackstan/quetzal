@@ -25,7 +25,7 @@ def transaction_to_float(transaction):
 
 venmo = pd.read_csv("../data/transaction_history.csv", skiprows=[0,1])
 
-#%% amount toal string to float and date conversion
+s#%% amount toal string to float and date conversion
 
 venmo["amount"] = venmo["Amount (total)"].apply(transaction_to_float)
 venmo["date"] = pd.to_datetime(venmo['Datetime'])
