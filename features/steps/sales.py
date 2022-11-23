@@ -1,6 +1,4 @@
-from behave import Given, When, Then
-from testing-simple
-
+from behave import *
 
 @given('we have behave installed')
 def step_impl(context):
