@@ -1,7 +1,7 @@
-Feature: showing off behave
+Feature: venmo summarize
 
   @prod
-  Scenario: run a simple test
-    Given we have behave installed
-    When we implement a test
-    Then behave will test it for us!
+  Scenario: Id like to convert the string into floats
+    Given a string
+    When we pass the string to the function
+    Then the string will be converted to a float
