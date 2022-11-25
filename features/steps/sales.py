@@ -1,5 +1,5 @@
 from behave import *
-from analysis_tools.venmo import  
+from analysis_tools.venmo import transaction_to_float
 
 @given('a string')
 def step_impl(context):
