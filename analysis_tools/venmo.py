@@ -34,7 +34,7 @@ def transaction_to_float(transaction):
 
     return float(mod_string)
 
-def get_sales(year_month):
+def get_venmo_sales(venmo_csv, year_month):
     """
 
     Parameters
@@ -62,7 +62,7 @@ def get_sales(year_month):
 
     """
     
-    venmo = pd.read_csv("../data/transaction_history.csv", skiprows=[0,1])
+    venmo = pd.read_csv(venmo_csv, skiprows=[0,1])
     
     # use this later maybe
     
@@ -85,11 +85,14 @@ def get_sales(year_month):
     keep_cols = ['ID', 'date', 'Note', 'From', 'amount']
     venmo = venmo[keep_cols]
     
-    venmo = venmo[venmo['date'].dt.strftime('%Y-%m') == year_month]
+    venmo = venmo[venmo['date'].dt.strftime('%m-%Y') == year_month]
     
     total_sales = venmo["amount"].sum()
 
     return total_sales
+
+#%%
     
-    
+if __name__ == "__main__":
+    get_venmo_sales("data/transaction_history.csv", "11-2022")
 
