@@ -3,13 +3,13 @@ from analysis_tools.venmo import transaction_to_float
 
 @given('a string')
 def step_impl(context):
-    my_string = "+ 5.00"
+    context.my_string = "+ 5.00"
     pass
 
 @when('we pass the string to the function')
 def step_impl(context):
-    assert True is not False
+    context.result = transaction_to_float(context.my_string)
 
 @then('the string will be converted to a float')
 def step_impl(context):
-    assert context.failed is False
+    assert context.result == float(5.00)
