@@ -34,18 +34,31 @@ def transaction_to_float(transaction):
 
     return float(mod_string)
 
-def get_sales(transaction):
+def get_sales(year_month):
     """
 
     Parameters
     ----------
-    month_year : str
+    year_month : str
         date string to filter
 
     Returns
     -------
     total_sales
         summed amount of sales
+        
+        #%% special events
+        event_0_string = "2022-11-05"
+        event_0 = venmo[venmo['date'].dt.strftime('%Y-%m-%d') == event_0_string]
+
+        event_1_string = "2022-11-15"
+        event_1 = venmo[venmo['date'].dt.strftime('%Y-%m-%d') == event_1_string]
+        
+        # # filter by single month
+        # venmo = venmo[venmo['date'].dt.strftime('%Y-%m') == '2014-01']
+
+        # # filter by single year
+        # venmo = venmo[venmo['date'].dt.strftime('%Y') == '2014']
 
     """
     
@@ -71,31 +84,12 @@ def get_sales(transaction):
     # keep only useful data
     keep_cols = ['ID', 'date', 'Note', 'From', 'amount']
     venmo = venmo[keep_cols]
+    
+    venmo = venmo[venmo['date'].dt.strftime('%Y-%m') == year_month]
+    
+    total_sales = venmo["amount"].sum()
 
-
-    return float(mod_string)
-
-def main():
-
-
-    #%% special events
-    event_0_string = "2022-11-05"
-    event_0 = venmo[venmo['date'].dt.strftime('%Y-%m-%d') == event_0_string]
-
-    event_1_string = "2022-11-15"
-    event_1 = venmo[venmo['date'].dt.strftime('%Y-%m-%d') == event_1_string]
-
-
-    #%%
-
-    venmo["amount"].sum()
-
-
-    # # filter by single month
-    # venmo = venmo[venmo['date'].dt.strftime('%Y-%m') == '2014-01']
-
-    # # filter by single year
-    # venmo = venmo[venmo['date'].dt.strftime('%Y') == '2014']
+    return total_sales
     
     
 
