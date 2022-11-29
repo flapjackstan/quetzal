@@ -34,41 +34,49 @@ def transaction_to_float(transaction):
 
     return float(mod_string)
 
-def main():
+def get_sales(transaction):
+    """
 
+    Parameters
+    ----------
+    month_year : str
+        date string to filter
 
-    #%% read
+    Returns
+    -------
+    total_sales
+        summed amount of sales
 
+    """
+    
     venmo = pd.read_csv("../data/transaction_history.csv", skiprows=[0,1])
-
-
-    #%% get begin and end
-
-    begin_balance = venmo["Beginning Balance"][0]
-    end_balabce = venmo["Ending Balance"][len(venmo)-1]
-
-    #%% drop first and last row
-
+    
+    # use this later maybe
+    
+    # begin_balance = venmo["Beginning Balance"][0]
+    # end_balabce = venmo["Ending Balance"][len(venmo)-1]
+    
+    # arrange data to be able to clean and filter
     venmo = venmo.drop(labels=[0, len(venmo)-1], axis=0)
-
-    #%% amount toal string to float and date conversion
-
+    
+    # put in correct data types
     venmo["amount"] = venmo["Amount (total)"].apply(transaction_to_float)
     venmo["date"] = pd.to_datetime(venmo['Datetime'])
-
-    #%% clean non sales related obs
-
+    
+    # remove non sales related data
     venmo = venmo.query("Type != 'Standard Transfer'")
     venmo = venmo.query("amount > 0")
     venmo = venmo.query("ID != 3672941199591778304")
-
-
-
-    #%% useful columns
-
+    
+    # keep only useful data
     keep_cols = ['ID', 'date', 'Note', 'From', 'amount']
-
     venmo = venmo[keep_cols]
+
+
+    return float(mod_string)
+
+def main():
+
 
     #%% special events
     event_0_string = "2022-11-05"
@@ -88,4 +96,6 @@ def main():
 
     # # filter by single year
     # venmo = venmo[venmo['date'].dt.strftime('%Y') == '2014']
+    
+    
 
