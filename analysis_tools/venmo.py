@@ -76,7 +76,7 @@ def get_venmo_sales(venmo_csv, year_month):
     venmo["amount"] = venmo["Amount (total)"].apply(transaction_to_float)
     venmo["date"] = pd.to_datetime(venmo['Datetime'])
     
-    # remove non sales related data
+    # remove non sales related data - need to auto mate the id one somehow
     venmo = venmo.query("Type != 'Standard Transfer'")
     venmo = venmo.query("amount > 0")
     venmo = venmo.query("ID != 3672941199591778304")
@@ -90,6 +90,28 @@ def get_venmo_sales(venmo_csv, year_month):
     total_sales = venmo["amount"].sum()
 
     return total_sales
+
+def get_shopify_sales(shopify_csv, year_month):
+    """
+
+    Parameters
+    ----------
+    year_month : str
+        date string to filter
+
+    Returns
+    -------
+    total_sales
+        summed amount of sales
+
+    """
+    
+    shopify_csv = "data/orders_export_1.csv"
+    
+    shopify = pd.read_csv(shopify_csv)
+    
+    
+    
 
 #%%
     
