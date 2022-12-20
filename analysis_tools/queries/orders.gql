@@ -1,0 +1,39 @@
+{
+  orders(first:20){
+    nodes{
+      name
+      updatedAt
+      lineItems(first: 10){
+        nodes{
+          name
+          quantity
+          originalTotalSet{shopMoney{amount}}
+          originalUnitPriceSet{shopMoney{amount}}
+        }
+      }
+      originalTotalPriceSet{shopMoney{amount}}
+      subtotalLineItemsQuantity
+      customer{
+        displayName
+      }
+      paymentGatewayNames
+      transactions(first:10){
+        id
+      accountNumber
+      formattedGateway
+      gateway
+      createdAt
+      kind
+      paymentIcon{altText}
+      processedAt
+      status
+      totalUnsettledSet{shopMoney{amount}}
+      amountSet{shopMoney{amount}}
+      paymentIcon {
+        altText
+      }
+      }
+    }
+  }
+}
+
