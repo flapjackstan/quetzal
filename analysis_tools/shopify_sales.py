@@ -22,33 +22,36 @@ API_VERSION = '2022-10'
 #%%
 
 shop_url = f"{SHOP_NAME}.myshopify.com"
+# query = "{ shop { name id } }"
+
+query = """{
+  orders(first: 10) {
+    edges {
+      node {
+        id
+        updatedAt
+        lineItems(first: 10) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+        customer {
+          id
+          displayName
+        }
+      }
+    }
+  }
+}
+
+"""
 
 with shopify.Session.temp(shop_url, API_VERSION, SHOPIFY_ADMIN_TOKEN):
-    query_return = shopify.GraphQL().execute("{ shop { name id } }")
+    query_return = json.loads(shopify.GraphQL().execute(query))
 
 #%%
 
-# =============================================================================
-# {
-#   orders(first: 10) {
-#     edges {
-#       node {
-#         id
-#         updatedAt
-#         lineItems (first: 10){
-#           edges {
-#             node {
-#               id
-#               name
-#             }
-#           }
-#         }
-#         customer {
-#           id
-#           displayName
-#         }
-#       }
-#     }
-#   }
-# }
-# =============================================================================
+query_return["data"]["orders"]["edges"][4]["node"]
