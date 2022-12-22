@@ -1,41 +1,55 @@
 #   orders(first: 15, query: "updated_at:>2022-12-18")
-# orders(first: 1, query: "name:#1085")
+
 {
-  orders(first:20){
-    nodes{
+  orders(first: 1, query: "name:#1085") {
+    nodes {
       name
       updatedAt
-      lineItems(first: 10){
-        nodes{
-          name
-          quantity
-          originalTotalSet{shopMoney{amount}}
-          originalUnitPriceSet{shopMoney{amount}}
-        }
+      lineItems(first: 10) {
+        ...ProductSold
       }
-      originalTotalPriceSet{shopMoney{amount}}
+      originalTotalPriceSet {
+        ...PriceAmount
+      }
       subtotalLineItemsQuantity
-      customer{
+      customer {
         displayName
       }
-      paymentGatewayNames
-      transactions(first:10){
-        id
-      accountNumber
-      formattedGateway
-      gateway
-      createdAt
-      kind
-      paymentIcon{altText}
-      processedAt
-      status
-      totalUnsettledSet{shopMoney{amount}}
-      amountSet{shopMoney{amount}}
-      paymentIcon {
-        altText
-      }
+      transactions(first: 10) {
+        ...PaymentTransactionDetails
       }
     }
+  }
+}
+
+fragment ProductSold on LineItemConnection {
+  nodes {
+    name
+    quantity
+    originalTotalSet {
+      ...PriceAmount
+    }
+    originalUnitPriceSet {
+      ...PriceAmount
+    }
+  }
+}
+
+fragment PriceAmount on MoneyBag {
+  shopMoney {
+    amount
+  }
+}
+
+fragment PaymentTransactionDetails on OrderTransaction {
+  accountNumber
+  gateway
+  paymentIcon {
+    altText
+  }
+  status
+  paymentIcon {
+    altText
   }
 }
 
