@@ -1,11 +1,22 @@
-
 # orders(first: 15, query: "updated_at:>2022-12-18") #the date string needs to be updatable
 # orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
 # orders(first: 1, query: "name:#1005") # one order and customer name
+#
+# query cost cannot exceed 1000 per x min
+# query restores at 50 per second
+# 
+# with query below, first 50 costs - 1852
+# with query below, first 40 costs - 1452
+# with query below, first 30 costs - 1112
+# with query below, first 29 costs - 1075
+# with query below, first 28 costs - 1038
+# with query below, first 27 costs - 1001
+# with query below, first 26 costs - 964
+# actual cost was 199
 
 
 query {
-  orders(first: 500, query: "updated_at:>2022-12-18") {
+  orders(first: 26, query: "updated_at:>2022-12-18") {
     nodes {
       name
       updatedAt
