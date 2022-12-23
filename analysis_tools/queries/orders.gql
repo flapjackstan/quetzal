@@ -1,7 +1,9 @@
 #   orders(first: 15, query: "updated_at:>2022-12-18")
+#   orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
+#   orders(first: 1, query: "name:#1005") # one order and customer name
 
 query {
-  orders(first: 1, query: "name:#1085") {
+  orders(first: 15, query: "updated_at:>2022-12-18") {
     nodes {
       name
       updatedAt

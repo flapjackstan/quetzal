@@ -49,8 +49,11 @@ query = read_file_as_text("analysis_tools/queries/orders.gql")
 #%%
 
 with shopify.Session.temp(shop_url, API_VERSION, SHOPIFY_ADMIN_TOKEN):
+    # below converts shopify return json into a python dict
     query_return = json.loads(shopify.GraphQL().execute(query))
 
 #%%
 
-query_return["data"]["orders"]["edges"][4]["node"]
+valid_json = json.dumps(query_return["data"]["orders"]["nodes"])
+
+
