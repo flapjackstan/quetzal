@@ -36,11 +36,11 @@ def read_file_as_text(path):
 #%%
 
 load_dotenv()
-SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
 
+SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
 SHOP_NAME = "tazacafe"
+SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 API_VERSION = '2022-10'
-shop_url = f"{SHOP_NAME}.myshopify.com"
 
 #%%
 
@@ -48,12 +48,15 @@ query = read_file_as_text("analysis_tools/queries/orders.gql")
 
 #%%
 
-with shopify.Session.temp(shop_url, API_VERSION, SHOPIFY_ADMIN_TOKEN):
-    # below converts shopify return json into a python dict
+with shopify.Session.temp(SHOP_URL, API_VERSION, SHOPIFY_ADMIN_TOKEN):
+    # below converts shopify return json (not ecma-262) into a python dict
     query_return = json.loads(shopify.GraphQL().execute(query))
+    # below converts the python dict into a json (ecma-262) that is able to be uploaded to postgres
+    valid_json = json.dumps(query_return["data"]["orders"]["nodes"])
 
 #%%
 
-valid_json = json.dumps(query_return["data"]["orders"]["nodes"])
+
+
 
 
