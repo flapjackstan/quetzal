@@ -1,6 +1,6 @@
 #   orders(first: 15, query: "updated_at:>2022-12-18")
 
-{
+query {
   orders(first: 1, query: "name:#1085") {
     nodes {
       name
