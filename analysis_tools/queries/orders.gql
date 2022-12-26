@@ -1,7 +1,3 @@
-# orders(first: 15, query: "updated_at:>2022-12-18") #the date string needs to be updatable
-# orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
-# orders(first: 1, query: "name:#1005") # one order and customer name
-#
 # query cost cannot exceed 1000 per x min
 # query restores at 50 per second
 # 
@@ -15,11 +11,17 @@
 # actual cost was 199
 
 
-query {
-  orders(first: 26, query: "updated_at:>2022-12-18") {
+
+query GetOrders($user_query: String!){
+  orders(first: 1, query: $user_query) {
     nodes {
       name
       updatedAt
+      note
+      tags
+      displayFinancialStatus
+      displayFulfillmentStatus
+      channelInformation{channelDefinition{subChannelName handle}}
       lineItems(first: 10) {
         ...ProductSold
       }
@@ -33,6 +35,11 @@ query {
       transactions(first: 10) {
         ...PaymentTransactionDetails
       }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      endCursor
     }
   }
 }
@@ -63,8 +70,7 @@ fragment PaymentTransactionDetails on OrderTransaction {
     altText
   }
   status
-  paymentIcon {
-    altText
-  }
 }
+
+
 
