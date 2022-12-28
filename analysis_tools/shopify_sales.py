@@ -179,6 +179,79 @@ def write_file(obj, path, filename, ext) -> None:
         json.dump(obj, f)
         
 
+def read_json(path, filename, ext) -> dict:
+    '''
+    
+    Parameters
+    ----------
+    path : Path object
+        Path object / destination.
+    filename : str
+        Name of file to write
+    ext : str
+        File type extension.
+
+    Returns
+    -------
+    dict
+        json converted to dictionary
+
+    '''
+    
+    read_path = Path(path)
+    
+    with open(read_path.joinpath(filename + ext)) as json_file:
+        data = json.load(json_file)
+        
+    return json.loads(data)
+
+def is_void(order) -> bool:
+    '''
+    
+
+    Parameters
+    ----------
+    order : dict
+        shopify order dictionary.
+
+    Returns
+    -------
+    bool
+        True if order is voided
+
+    '''
+    financial_status = order["data"]["orders"]["nodes"][0]["displayFinancialStatus"]
+    
+    if financial_status == "VOIDED":
+        return True
+    
+    return False
+     
+
+def is_unfulfilled(order) -> bool:
+    '''
+    
+
+    Parameters
+    ----------
+    order : dict
+        shopify order dictionary.
+
+    Returns
+    -------
+    bool
+        True if order is unfulfilled
+
+    '''
+    financial_status = order["data"]["orders"]["nodes"][0]["displayFulfillmentStatus"]
+    
+    if financial_status == "UNFULFILLED":
+        print(financial_status)
+        return True
+    
+    return False
+
+
 def get_order_total_collected(order) -> float:
     '''
 
@@ -194,7 +267,12 @@ def get_order_total_collected(order) -> float:
 
     '''
     
-    return float(order["data"]["orders"]["nodes"][0]["originalTotalPriceSet"]["shopMoney"]["amount"])
+    if is_void(order) or is_unfulfilled(order):
+        return(float(0))
+    
+    total_amount = order["data"]["orders"]["nodes"][0]["originalTotalPriceSet"]["shopMoney"]["amount"]
+    
+    return float(total_amount)
 
 
 def get_customer_orders(order) -> list:
@@ -251,7 +329,7 @@ def get_order_tips(order) -> float:
     Returns
     -------
     float
-        Money collected from tips.
+        Money collected from tips. If no tip is collected this is 0
 
     '''
     
@@ -259,7 +337,6 @@ def get_order_tips(order) -> float:
     tip_amount = get_tip_amount(cutomer_orders)
     
     return tip_amount
-
 
 
 def get_aggs(orders_list) -> dict:
@@ -279,27 +356,38 @@ def get_aggs(orders_list) -> dict:
     
     agg_dict = {}
     
-    total_collected = 0
     total_tips = 0
     customer_tip_count = 0
+    total_collected = 0
+    total_cash_collected = 0
+    total_credit_collected = 0
     order_count = 0
     
     for index, order in enumerate(orders_list):
         
+        # TIPS CALCULATION
         tip_amount = get_order_tips(order)
         
         if tip_amount > 0:
             customer_tip_count = customer_tip_count + 1
+            
+        total_tips = total_tips + tip_amount
+            
+        # TOTAL MONEY COLLECTED
         
         total_collected = total_collected + get_order_total_collected(order)
-        total_tips = total_tips + tip_amount
+        # total_cash_collected = total_cash_collected + get_cash_collected(order)
+        # total_credit_collected = total_credit_collected + get_credit_collected(order)
         
+        
+        
+        # SIMPLE COUNT OF ORDERS
         order_count = order_count + 1
         
     total_sales = total_collected - total_tips
         
     agg_dict.update({"Total Orders": order_count})
-    agg_dict.update({"Total Cash Collected": total_collected})
+    agg_dict.update({"Total Collected": total_collected})
     agg_dict.update({"Total Tips Collected": total_tips})
     agg_dict.update({"Total Customers Who Tipped": customer_tip_count})
     agg_dict.update({"Total Sales": total_sales})
@@ -308,15 +396,17 @@ def get_aggs(orders_list) -> dict:
 
 #%% Constants
 
-load_dotenv()
+# load_dotenv()
 
-data_path = "./data/"
+# data_path = "./data/"
+# SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
+# SHOP_NAME = "tazacafe"
+# API_VERSION = '2022-10'
 
-SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
-SHOP_NAME = "tazacafe"
-API_VERSION = '2022-10'
+# SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 
-SHOP_URL = f"{SHOP_NAME}.myshopify.com"
+# events = {"Compton Farmers Market":"2022-11-05",
+#           }
 
 
 #%% Example Filter Query
@@ -325,20 +415,32 @@ SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 # orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
 # orders(first: 1, query: "name:#1005") # one order and customer name
 
-query = read_file_as_text("analysis_tools/queries/orders.gql")
-input_vars = {"user_query": "updated_at:>2022-12-18"}
-gql = execute_gql(gql=query, json_return=0, variables=input_vars)
+# query = read_file_as_text("analysis_tools/queries/orders.gql")
+# input_vars = {"user_query": "updated_at:>2022-12-18"}
+# gql = execute_gql(gql=query, json_return=0, variables=input_vars)
 
-#%%
+# #%%
 
-november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
-december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
+# november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
+# december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
+
+data_path = "./data/"
+november_orders = read_json(data_path, "november_orders", ".json")
+december_orders = read_json(data_path, "december_orders", ".json")
+
+# #%%
+# november_orders_json = convert_dict_to_json(november_orders)
+# decemer_orders_json = convert_dict_to_json(december_orders)
+
+# write_file(november_orders_json, data_path, "november_orders", ".json")
+# write_file(decemer_orders_json, data_path, "december_orders", ".json")
 
 #%%
 
 november_orders_aggs = get_aggs(november_orders)
 december_orders_aggs = get_aggs(december_orders)
 
+#%%
 
 # Need to filter on refunded
 november_transactions = november_orders_aggs["Total Cash Collected"] - 180 
@@ -364,13 +466,3 @@ revenue_after_gabby = revenue_to_date - gabby_payout
 elmer_payout = revenue_after_gabby * elmer_percent
 
 revenue_after_elmer = revenue_after_gabby - elmer_payout
-
-#%%
-
-november_orders_json = convert_dict_to_json(november_orders)
-decemer_orders_json = convert_dict_to_json(december_orders)
-
-#%%
-
-write_file(november_orders_json, data_path, "november_orders", ".json")
-write_file(decemer_orders_json, data_path, "december_orders", ".json")
