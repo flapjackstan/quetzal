@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 import shopify
 import json
+import pandas as pd
 from pathlib import Path
 
 def read_file_as_text(path) -> str:
@@ -117,7 +118,7 @@ def get_orders_between_dates(date_1, date_2) -> list:
     print(f"Getting orders between {date_1} and {date_2}")
     
     query = read_file_as_text("analysis_tools/queries/orders.gql")
-    date_filter = f"updated_at:>{date_1} AND updated_at:<{date_2}"
+    date_filter = f"processed_at:>{date_1} AND processed_at:<{date_2}"
     input_vars = {"user_query": date_filter}
     
     first_return = execute_gql(gql=query, json_return=0, variables=input_vars)
@@ -134,7 +135,7 @@ def get_orders_between_dates(date_1, date_2) -> list:
     while has_next_page and len(return_list) < 100:
         
         query = read_file_as_text("analysis_tools/queries/keep_getting_orders.gql")
-        date_filter = f"updated_at:>{date_1} AND updated_at:<{date_2}"
+        date_filter = f"processed_at:>{date_1} AND processed_at:<{date_2}"
         input_vars = {"user_query": date_filter, "prev_cursor": end_cursor}
         
         shopify_returns = execute_gql(gql=query, json_return=0, variables=input_vars)
@@ -144,7 +145,7 @@ def get_orders_between_dates(date_1, date_2) -> list:
         has_next_page = shopify_returns["data"]["orders"]["pageInfo"]["hasNextPage"]
         end_cursor = shopify_returns["data"]["orders"]["pageInfo"]["endCursor"]
         
-        print(f"Has Next Page: {has_next_page}")
+        # print(f"Has Next Page: {has_next_page}")
         # print(f"End Cursor: {end_cursor}")
         print(f"Request Number: {len(return_list)}")
     
@@ -205,6 +206,7 @@ def read_json(path, filename, ext) -> dict:
         
     return json.loads(data)
 
+
 def is_void(order) -> bool:
     '''
     
@@ -250,6 +252,23 @@ def is_unfulfilled(order) -> bool:
         return True
     
     return False
+
+
+def has_tags(tag_list) -> bool:
+    '''
+    
+
+    Parameters
+    ----------
+    tag_list : list
+        list of hashtags to check.
+
+    Returns
+    -------
+    bool
+        True if tags are present.
+
+    '''
 
 
 def get_order_total_collected(order) -> float:
@@ -394,39 +413,88 @@ def get_aggs(orders_list) -> dict:
     
     return agg_dict
 
+
+def access_order_data(order) -> dict:
+    '''
+    
+
+    Parameters
+    ----------
+    order : dict
+        shopify order dictionary.
+
+    Returns
+    -------
+    dict
+        data dict from individual order.
+
+    '''
+    
+    return order["data"]["orders"]["nodes"][0]
+
+
+def orders_to_df(orders_list):
+    '''
+    
+
+    Parameters
+    ----------
+    orders_list : list
+        Shopify orders list
+
+    Returns
+    -------
+    df : DataFrame
+        Dataframe version of orders
+    '''
+    
+    data_list = []
+    
+    for index, order in enumerate(orders_list):
+        data_list.append(access_order_data(order))
+        
+    return pd.DataFrame(data_list)
+
+    
+
+#%%
 #%% Constants
 
-# load_dotenv()
+load_dotenv()
 
-# data_path = "./data/"
-# SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
-# SHOP_NAME = "tazacafe"
-# API_VERSION = '2022-10'
+data_path = "./data/"
+SHOPIFY_ADMIN_TOKEN = os.environ.get("SHOPIFY_ADMIN_TOKEN")
+SHOP_NAME = "tazacafe"
+API_VERSION = '2022-10'
 
-# SHOP_URL = f"{SHOP_NAME}.myshopify.com"
+SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 
-# events = {"Compton Farmers Market":"2022-11-05",
-#           }
+events = {"Compton Farmers Market":"2022-11-05",
+          "USC Trojan Market":"2022-11-15",
+          "DTSA: Santora Artwalk":"2022-12-03",
+          "Ten Mile Brewery":"2022-12-04",          
+          "Cherry Co. Farmers Market":"2022-12-18"
+          }
 
 
 #%% Example Filter Query
 
-# orders(first: 15, query: "updated_at:>2022-12-18") #the date string needs to be updatable
+# orders(first: 15, query: "created_at:>2022-12-18") #the date string needs to be updatable
 # orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
 # orders(first: 1, query: "name:#1005") # one order and customer name
 
-# query = read_file_as_text("analysis_tools/queries/orders.gql")
-# input_vars = {"user_query": "updated_at:>2022-12-18"}
-# gql = execute_gql(gql=query, json_return=0, variables=input_vars)
+query = read_file_as_text("analysis_tools/queries/orders.gql")
+input_vars = {"user_query": "processed_at:>2022-11-01"}
+gql = execute_gql(gql=query, json_return=0, variables=input_vars)
 
-# #%%
+#%%
 
-# november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
+november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
 # december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
 
-data_path = "./data/"
-november_orders = read_json(data_path, "november_orders", ".json")
-december_orders = read_json(data_path, "december_orders", ".json")
+# data_path = "./data/"
+# november_orders = read_json(data_path, "november_orders", ".json")
+# december_orders = read_json(data_path, "december_orders", ".json")
 
 # #%%
 # november_orders_json = convert_dict_to_json(november_orders)
@@ -437,8 +505,12 @@ december_orders = read_json(data_path, "december_orders", ".json")
 
 #%%
 
+df = orders_to_df(november_orders)
+
+#%%
+
 november_orders_aggs = get_aggs(november_orders)
-december_orders_aggs = get_aggs(december_orders)
+# december_orders_aggs = get_aggs(december_orders)
 
 #%%
 
