@@ -1,0 +1,62 @@
+query GetOrders($user_query: String! $prev_cursor: String!){
+  orders(first: 1, query: $user_query after: $prev_cursor) {
+    nodes {
+      name
+      updatedAt
+      note
+      tags
+      displayFinancialStatus
+      displayFulfillmentStatus
+      channelInformation{channelDefinition{subChannelName handle}}
+      lineItems(first: 10) {
+        ...ProductSold
+      }
+      originalTotalPriceSet {
+        ...PriceAmount
+      }
+      subtotalLineItemsQuantity
+      customer {
+        displayName
+      }
+      transactions(first: 10) {
+        ...PaymentTransactionDetails
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      endCursor
+    }
+  }
+}
+
+fragment ProductSold on LineItemConnection {
+  nodes {
+    name
+    quantity
+    originalTotalSet {
+      ...PriceAmount
+    }
+    originalUnitPriceSet {
+      ...PriceAmount
+    }
+  }
+}
+
+fragment PriceAmount on MoneyBag {
+  shopMoney {
+    amount
+  }
+}
+
+fragment PaymentTransactionDetails on OrderTransaction {
+  accountNumber
+  gateway
+  paymentIcon {
+    altText
+  }
+  status
+}
+
+
+

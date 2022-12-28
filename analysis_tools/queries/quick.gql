@@ -1,0 +1,1 @@
+query{  orders(first:10, query:"updated_at:>2022-11-28"){    nodes{      note      tags      displayFinancialStatus      displayFulfillmentStatus      transactions{paymentIcon{altText}}      channelInformation{channelDefinition{subChannelName handle}}    }  }}
