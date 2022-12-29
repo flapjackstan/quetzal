@@ -16,7 +16,7 @@ query GetOrders($user_query: String!){
   orders(first: 1, query: $user_query) {
     nodes {
       name
-      updatedAt
+      processedAt
       note
       tags
       displayFinancialStatus
@@ -66,6 +66,14 @@ fragment PriceAmount on MoneyBag {
 fragment PaymentTransactionDetails on OrderTransaction {
   accountNumber
   gateway
+  fees {
+          amount {
+            amount
+          }
+          taxAmount {
+            amount
+          }
+        }
   paymentIcon {
     altText
   }

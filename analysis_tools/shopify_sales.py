@@ -2,7 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Dec 18 12:31:00 2022
+Gabby buy in 3393.51
+Elmer buy in 3340.95
 
+todo
+use dates, products and percentage donation to calculate how much goes to other person
+
+calc average monthly spend
 @author: camargo
 """
 #%% Functions and Libraries
@@ -248,18 +254,20 @@ def is_unfulfilled(order) -> bool:
     financial_status = order["data"]["orders"]["nodes"][0]["displayFulfillmentStatus"]
     
     if financial_status == "UNFULFILLED":
-        print(financial_status)
         return True
     
     return False
 
 
-def has_tags(tag_list) -> bool:
+def has_tags(search_tags, tag_list) -> bool:
     '''
     
 
     Parameters
     ----------
+    search_tags : list
+        list of hashtags to look for in tag_list.
+    
     tag_list : list
         list of hashtags to check.
 
@@ -269,7 +277,13 @@ def has_tags(tag_list) -> bool:
         True if tags are present.
 
     '''
-
+    
+    for tag in tag_list:
+        if tag in search_tags:
+            return True
+        
+    return False
+        
 
 def get_order_total_collected(order) -> float:
     '''
@@ -286,7 +300,7 @@ def get_order_total_collected(order) -> float:
 
     '''
     
-    if is_void(order) or is_unfulfilled(order):
+    if is_void(order) or is_unfulfilled(order) or has_tags(["test"], access_order_data(order)["tags"]):
         return(float(0))
     
     total_amount = order["data"]["orders"]["nodes"][0]["originalTotalPriceSet"]["shopMoney"]["amount"]
@@ -358,6 +372,34 @@ def get_order_tips(order) -> float:
     return tip_amount
 
 
+def get_fee(order) -> float:
+    '''
+
+    Parameters
+    ----------
+    order : dict
+        shopify order dictionary.
+
+    Returns
+    -------
+    float
+        Fees Collected
+
+    '''
+    
+    data = access_order_data(order)
+    
+    # some have empty transactions
+    if not data["transactions"]:
+        return 0.0
+    
+    # some paid cash and there is no fee
+    if not data["transactions"][0]["fees"]:
+        return 0.0
+
+    return float(data["transactions"][0]["fees"][0]["amount"]["amount"])
+
+
 def get_aggs(orders_list) -> dict:
     '''
 
@@ -378,8 +420,8 @@ def get_aggs(orders_list) -> dict:
     total_tips = 0
     customer_tip_count = 0
     total_collected = 0
+    total_fees = 0
     total_cash_collected = 0
-    total_credit_collected = 0
     order_count = 0
     
     for index, order in enumerate(orders_list):
@@ -392,11 +434,12 @@ def get_aggs(orders_list) -> dict:
             
         total_tips = total_tips + tip_amount
             
-        # TOTAL MONEY COLLECTED
+        # MONEY COLLECTED AND FEES
         
         total_collected = total_collected + get_order_total_collected(order)
-        # total_cash_collected = total_cash_collected + get_cash_collected(order)
-        # total_credit_collected = total_credit_collected + get_credit_collected(order)
+        total_fees = total_fees + get_fee(order)
+
+        total_cash_collected = total_cash_collected + get_cash_collected(order)
         
         
         
@@ -410,6 +453,9 @@ def get_aggs(orders_list) -> dict:
     agg_dict.update({"Total Tips Collected": total_tips})
     agg_dict.update({"Total Customers Who Tipped": customer_tip_count})
     agg_dict.update({"Total Sales": total_sales})
+    agg_dict.update({"Total Fees": total_fees})
+    agg_dict.update({"Total Paid in Cash": total_cash_collected})
+    agg_dict.update({"Total Paid in Credit": total_collected - total_cash_collected})
     
     return agg_dict
 
@@ -432,6 +478,25 @@ def access_order_data(order) -> dict:
     
     return order["data"]["orders"]["nodes"][0]
 
+def get_transaction_gateway(order):
+    
+    data = access_order_data(order)
+    
+    # some have empty transactions
+    if not data["transactions"]:
+        return 0.0
+    
+    return data["transactions"][0]["gateway"]
+
+
+def get_cash_collected(order):
+    
+    gateway = get_transaction_gateway(order)
+    
+    if gateway == "cash":
+        return float(get_order_total_collected(order))
+    
+    return 0
 
 def orders_to_df(orders_list):
     '''
@@ -457,7 +522,7 @@ def orders_to_df(orders_list):
 
     
 
-#%%
+
 #%% Constants
 
 load_dotenv()
@@ -483,58 +548,44 @@ events = {"Compton Farmers Market":"2022-11-05",
 # orders(first: 1, query: "name:#1085") # two orders and tip, no customer name
 # orders(first: 1, query: "name:#1005") # one order and customer name
 
-query = read_file_as_text("analysis_tools/queries/orders.gql")
-input_vars = {"user_query": "processed_at:>2022-11-01"}
-gql = execute_gql(gql=query, json_return=0, variables=input_vars)
+# query = read_file_as_text("analysis_tools/queries/orders.gql")
+# input_vars = {"user_query": "processed_at:>2022-11-01"}
+# gql = execute_gql(gql=query, json_return=0, variables=input_vars)
 
 #%%
 
 november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
-# december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
+december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
 
 # data_path = "./data/"
 # november_orders = read_json(data_path, "november_orders", ".json")
 # december_orders = read_json(data_path, "december_orders", ".json")
 
 # #%%
-# november_orders_json = convert_dict_to_json(november_orders)
-# decemer_orders_json = convert_dict_to_json(december_orders)
+november_orders_json = convert_dict_to_json(november_orders)
+decemer_orders_json = convert_dict_to_json(december_orders)
 
-# write_file(november_orders_json, data_path, "november_orders", ".json")
-# write_file(decemer_orders_json, data_path, "december_orders", ".json")
+write_file(november_orders_json, data_path, "november_orders", ".json")
+write_file(decemer_orders_json, data_path, "december_orders", ".json")
 
 #%%
 
-df = orders_to_df(november_orders)
+nov = orders_to_df(november_orders)
+dec = orders_to_df(december_orders)
 
 #%%
 
 november_orders_aggs = get_aggs(november_orders)
-# december_orders_aggs = get_aggs(december_orders)
+december_orders_aggs = get_aggs(december_orders)
 
 #%%
 
 # Need to filter on refunded
-november_transactions = november_orders_aggs["Total Cash Collected"] - 180 
+november_transactions = november_orders_aggs["Total Cash Collected"]
 december_transactions = december_orders_aggs["Total Cash Collected"]
 
-#%%
+#%% Better to access payouts
 
-customer_transactions_to_date = november_transactions + december_transactions
-shopify_percent = .027
 gabby_percent = .05
 elmer_percent = .05
 
-revenue_to_date = customer_transactions_to_date
-
-shopify_payout = revenue_to_date * shopify_percent 
-
-revenue_after_shopify = revenue_to_date - shopify_payout
-
-gabby_payout = revenue_after_shopify * gabby_percent
-
-revenue_after_gabby = revenue_to_date - gabby_payout
-
-elmer_payout = revenue_after_gabby * elmer_percent
-
-revenue_after_elmer = revenue_after_gabby - elmer_payout
