@@ -6,6 +6,7 @@ Gabby buy in 3393.51
 Elmer buy in 3340.95
 
 todo
+shopify pay out .027
 use dates, products and percentage donation to calculate how much goes to other person
 
 calc average monthly spend
@@ -19,6 +20,7 @@ import shopify
 import json
 import pandas as pd
 from pathlib import Path
+from datetime import datetime, timedelta
 
 def read_file_as_text(path) -> str:
     """
@@ -554,38 +556,53 @@ events = {"Compton Farmers Market":"2022-11-05",
 
 #%%
 
-november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
-december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
+# november_orders = get_orders_between_dates("2022-11-01", "2022-11-30")
+# december_orders = get_orders_between_dates("2022-12-01", "2022-12-31")
 
-# data_path = "./data/"
-# november_orders = read_json(data_path, "november_orders", ".json")
-# december_orders = read_json(data_path, "december_orders", ".json")
+# # #%%
+# november_orders_json = convert_dict_to_json(november_orders)
+# decemer_orders_json = convert_dict_to_json(december_orders)
 
-# #%%
-november_orders_json = convert_dict_to_json(november_orders)
-decemer_orders_json = convert_dict_to_json(december_orders)
-
-write_file(november_orders_json, data_path, "november_orders", ".json")
-write_file(decemer_orders_json, data_path, "december_orders", ".json")
+# write_file(november_orders_json, data_path, "november_orders", ".json")
+# write_file(decemer_orders_json, data_path, "december_orders", ".json")
 
 #%%
+
+data_path = "./data/"
+november_orders = read_json(data_path, "november_orders", ".json")
+december_orders = read_json(data_path, "december_orders", ".json")
+
+#%%
+
+events = {"2022-11-05":"Compton Farmers Market",
+          "2022-11-15":"USC Trojan Market",
+          "2022-12-03":"DTSA: Santora Artwalk",
+          "2022-12-04":"Ten Mile Brewery",          
+          "2022-12-18":"Cherry Co. Farmers Market"
+          }
+
+collabs = [
+              {"collab_timeframe":"2022-12-03,2022-12-03", "collab_name":"16% of Can Sales Buy Toys"},
+              {"collab_timeframe":"2022-12-04,2022-12-04", "collab_name":"100% of Hot Chocolate and Beans Go to Blackdog"}       
+          ]
+
+november_orders = add_event_variables(november_orders, events)
+december_orders = add_event_variables(december_orders, events)
+
+november_orders = add_collab_variables(november_orders, collabs)
+december_orders = add_collab_variables(december_orders, collabs)
+
 
 nov = orders_to_df(november_orders)
 dec = orders_to_df(december_orders)
 
 #%%
 
-november_orders_aggs = get_aggs(november_orders)
-december_orders_aggs = get_aggs(december_orders)
+november_orders_aggs = get_aggs(november_orders, "2022-11-01,2022-11-30")
+december_orders_aggs = get_aggs(december_orders, "2022-12-01,2022-12-31")
 
 #%%
 
-# Need to filter on refunded
-november_transactions = november_orders_aggs["Total Cash Collected"]
-december_transactions = december_orders_aggs["Total Cash Collected"]
 
-#%% Better to access payouts
 
-gabby_percent = .05
-elmer_percent = .05
-
+cherry_aggs = get_aggs(december_orders, "2022-12-18,2022-12-18")
