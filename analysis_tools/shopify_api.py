@@ -1,37 +1,32 @@
 # -*- coding: utf-8 -*-
 
-import shopify
-import json
-import os
-from dotenv import load_dotenv
+'''
+Shopify helper functions
 
-def execute_gql(gql, variables, json_return=0):
-    """
+'''
+
+def read_json(path, filename, ext) -> dict:
+    '''
+    
     Parameters
     ----------
-    gql  :   str
-    gql to be executed
-    
+    path : Path object
+        Path object / destination.
+    filename : str
+        Name of file to write
+    ext : str
+        File type extension.
+
     Returns
     -------
-    query_return    :   dict | str
-    text from file
-    
-    Example
-    -------
-    execute_gql("query { shop { name id } }")
-        {shop: tazacafe}
-    """
-    
-    with shopify.Session.temp(SHOP_URL, API_VERSION, SHOPIFY_ADMIN_TOKEN):
+    dict
+        json converted to dictionary
 
-        # below converts shopify return json (not ecma-262) into a python dict
-        query_return = json.loads(shopify.GraphQL().execute(gql, variables=variables))
+    '''
+    
+    read_path = Path(path)
+    
+    with open(read_path.joinpath(filename + ext)) as json_file:
+        data = json.load(json_file)
         
-    if json_return:
-        # below converts the python dict into a json (ecma-262) that is able to be uploaded to postgres
-        query_return = convert_dict_to_json(query_return["data"])
-    
-    # error handling?
-    
-    return query_return
+    return json.loads(data)
