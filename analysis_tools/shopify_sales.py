@@ -252,14 +252,19 @@ def get_aggs(orders_list, timeframe) -> dict:
     agg_dict = {}
     
     total_tips = 0
-    customer_tip_count = 0
     total_collected = 0
     total_fees = 0
     total_cash_collected = 0
     order_count = 0
-    count_canned_coldbrew = 0
-    count_six_pack_coldbrew = 0
-    count_customers_who_tipped = 0
+    
+    items_available = get_items_available(orders_list)
+    items_dict = {}
+    
+    for index, item in enumerate(items_available):
+        entry = {}
+        entry["product name"] = item
+        entry["count"] = 0
+        items_dict[index] = entry
     
     
     for index, order in enumerate(orders_list):
@@ -270,9 +275,9 @@ def get_aggs(orders_list, timeframe) -> dict:
         
             tip_amount = get_order_tips(order)
 
-            count_customers_who_tipped = count_customers_who_tipped + get_count_of_product(order, "Tip")
-            count_canned_coldbrew = count_canned_coldbrew + get_count_of_product(order, "Cafe De Olla Canned Cold Brew")
-            count_six_pack_coldbrew = count_six_pack_coldbrew + get_count_of_product(order, "6 Pack Cafe De Olla Cold Brew")
+            for index, item in enumerate(items_available):
+                items_dict[index]["count"] = items_dict[index]["count"] + get_count_of_product(order, item)
+            
             
             total_tips = total_tips + tip_amount
                 
@@ -289,15 +294,13 @@ def get_aggs(orders_list, timeframe) -> dict:
     total_sales = total_collected - total_tips
         
     agg_dict.update({"Total Orders": order_count})
-    agg_dict.update({"Total Cafe De Olla Singles": count_canned_coldbrew})
-    agg_dict.update({"Total 6 Pack Cafe De Ollas": count_six_pack_coldbrew})
     agg_dict.update({"Total Collected": total_collected})
     agg_dict.update({"Total Tips Collected": total_tips})
-    agg_dict.update({"Total Customers Who Tipped": count_customers_who_tipped})
     agg_dict.update({"Total Sales": total_sales})
     agg_dict.update({"Total Fees": total_fees})
     agg_dict.update({"Total Paid in Cash": total_cash_collected})
     agg_dict.update({"Total Paid in Credit": total_collected - total_cash_collected})
+    agg_dict.update({"Product Dictionary": items_dict})
     
     return agg_dict
 
@@ -486,11 +489,6 @@ SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 
 data_path = "./data/"
 december_orders = read_json(data_path, "december_orders", ".json")
-
-#%%
-
-    
-items_available = get_items_available(december_orders)
 
 #%%
 
