@@ -236,3 +236,21 @@ def get_count_of_product(order, product) -> int:
             product_count = product_count + 1
     
     return(product_count)
+
+
+# get all items available in the time period
+
+def get_items_available(orders):
+    items_list = []
+    
+    for index, order in enumerate(orders):
+        
+        line_items = get_line_items(order)
+        
+        for index, item in enumerate(line_items):
+            if item["name"] in items_list:
+                pass
+            else:
+                items_list.append(item["name"])
+            
+    return items_list
