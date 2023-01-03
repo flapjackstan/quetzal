@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Dec 18 12:31:00 2022
+notes
+Shopify pay out .027
 Gabby buy in 3393.51
 Elmer buy in 3340.95
 
-todo
-shopify pay out .027
+
 use dates, products and percentage donation to calculate how much goes to other person
 
 calc average monthly spend
@@ -17,178 +18,12 @@ calc average monthly spend
 import os
 from dotenv import load_dotenv
 import shopify
-import json
 import pandas as pd
-from pathlib import Path
+
 from datetime import datetime, timedelta
-from shopify_api import read_json
+from analysis_tools.shopify_api import read_json, get_line_items, get_count_orders, get_count_of_product, get_order_data
 
 #%%
-
-def read_file_as_text(path) -> str:
-    """
-    Parameters
-    ----------
-    path  :   str
-    path to file to be read
-    
-    Returns
-    -------
-    file_text    :   str
-    text from file
-    
-    Example
-    -------
-    read_sql("my_file.gql")
-        "query { shop { name id } }"
-    """
-    file_text = Path(path).read_text(encoding="utf-8")
-    
-    # error handling?
-    
-    return file_text
-
-
-def convert_dict_to_json(py_dict) -> str:
-    """
-    Parameters
-    ----------
-    py_dict  :   dict
-    dict to convert to json
-    
-    Returns
-    -------
-    json_return    :   str
-    json version of dict
-    
-    Example
-    -------
-    convert_dict_to_json({key:"value"})
-        "{key:"value"}"
-    """
-    json_return = json.dumps(py_dict)
-    
-    # error handling?
-    
-    return json_return
-
-
-def execute_gql(gql, variables, json_return=0):
-    """
-    Parameters
-    ----------
-    gql  :   str
-    gql to be executed
-    
-    Returns
-    -------
-    query_return    :   dict | str
-    text from file
-    
-    Example
-    -------
-    execute_gql("query { shop { name id } }")
-        {shop: tazacafe}
-    """
-    
-    with shopify.Session.temp(SHOP_URL, API_VERSION, SHOPIFY_ADMIN_TOKEN):
-
-        # below converts shopify return json (not ecma-262) into a python dict
-        query_return = json.loads(shopify.GraphQL().execute(gql, variables=variables))
-        
-    if json_return:
-        # below converts the python dict into a json (ecma-262) that is able to be uploaded to postgres
-        query_return = convert_dict_to_json(query_return["data"])
-    
-    # error handling?
-    
-    return query_return
-
-
-def get_orders_between_dates(date_1, date_2) -> list:
-    """
-    Parameters
-    ----------
-    date_1  :   str
-    Begin date filter
-    
-    date_2  :   str
-    End date fiter
-    
-    Returns
-    -------
-    query_return    :   dict | str
-    text from file
-    
-    Example
-    -------
-    get_orders_between_dates("2022-12-01", "2022-12-31")
-        orders return from shopify
-    """
-    
-    print(f"Getting orders between {date_1} and {date_2}")
-    
-    query = read_file_as_text("analysis_tools/queries/orders.gql")
-    date_filter = f"processed_at:>{date_1} AND processed_at:<{date_2}"
-    input_vars = {"user_query": date_filter}
-    
-    first_return = execute_gql(gql=query, json_return=0, variables=input_vars)
-    
-    has_next_page = first_return["data"]["orders"]["pageInfo"]["hasNextPage"]
-    end_cursor = first_return["data"]["orders"]["pageInfo"]["endCursor"]
-    
-    print(f"Has Next Page: {has_next_page}")
-    # print(f"End Cursor: {end_cursor}")
-    
-    return_list = []
-    return_list.append(first_return)
-    
-    while has_next_page and len(return_list) < 100:
-        
-        query = read_file_as_text("analysis_tools/queries/keep_getting_orders.gql")
-        date_filter = f"processed_at:>{date_1} AND processed_at:<{date_2}"
-        input_vars = {"user_query": date_filter, "prev_cursor": end_cursor}
-        
-        shopify_returns = execute_gql(gql=query, json_return=0, variables=input_vars)
-        print(shopify_returns["data"]["orders"]["nodes"][0]["name"])
-        return_list.append(shopify_returns)
-        
-        has_next_page = shopify_returns["data"]["orders"]["pageInfo"]["hasNextPage"]
-        end_cursor = shopify_returns["data"]["orders"]["pageInfo"]["endCursor"]
-        
-        # print(f"Has Next Page: {has_next_page}")
-        # print(f"End Cursor: {end_cursor}")
-        print(f"Request Number: {len(return_list)}")
-    
-    query_return = return_list
-    
-    # error handling?
-    
-    return query_return
-
-
-def write_file(obj, path, filename, ext) -> None:
-    '''
-    Parameters
-    ----------
-    obj : df | dict
-        Object to write.
-    path : Path object
-        Path object / destination.
-    filename : str
-        Name of file to write
-    ext : str
-        File type extension.
-
-    Returns
-    -------
-    None.
-    '''
-    
-    write_path = Path(path)
-
-    with open(write_path.joinpath(filename + ext), "w+") as f:
-        json.dump(obj, f)
 
 
 def is_void(order) -> bool:
@@ -278,7 +113,7 @@ def get_order_total_collected(order) -> float:
 
     '''
     
-    if is_void(order) or is_unfulfilled(order) or has_tags(["test"], access_order_data(order)["tags"]):
+    if is_void(order) or is_unfulfilled(order) or has_tags(["test"], get_order_data(order)["tags"]):
         return(float(0))
     
     total_amount = order["data"]["orders"]["nodes"][0]["originalTotalPriceSet"]["shopMoney"]["amount"]
@@ -365,7 +200,7 @@ def get_fee(order) -> float:
 
     '''
     
-    data = access_order_data(order)
+    data = get_order_data(order)
     
     # some have empty transactions
     if not data["transactions"]:
@@ -424,21 +259,23 @@ def get_aggs(orders_list, timeframe) -> dict:
     total_fees = 0
     total_cash_collected = 0
     order_count = 0
+    count_canned_coldbrew = 0
+    count_six_pack_coldbrew = 0
+    count_customers_who_tipped = 0
+    
     
     for index, order in enumerate(orders_list):
         
         pst = get_time_of_order(order)
         
-        print(pst.date())
-        
         if timeframe[0].date() <= pst.date() <= timeframe[1].date():
         
-            # TIPS CALCULATION
             tip_amount = get_order_tips(order)
+
+            count_customers_who_tipped = count_customers_who_tipped + get_count_of_product(order, "Tip")
+            count_canned_coldbrew = count_canned_coldbrew + get_count_of_product(order, "Cafe De Olla Canned Cold Brew")
+            count_six_pack_coldbrew = count_six_pack_coldbrew + get_count_of_product(order, "6 Pack Cafe De Olla Cold Brew")
             
-            if tip_amount > 0:
-                customer_tip_count = customer_tip_count + 1
-                
             total_tips = total_tips + tip_amount
                 
             # MONEY COLLECTED AND FEES
@@ -454,9 +291,11 @@ def get_aggs(orders_list, timeframe) -> dict:
     total_sales = total_collected - total_tips
         
     agg_dict.update({"Total Orders": order_count})
+    agg_dict.update({"Total Cafe De Olla Singles": count_canned_coldbrew})
+    agg_dict.update({"Total 6 Pack Cafe De Ollas": count_six_pack_coldbrew})
     agg_dict.update({"Total Collected": total_collected})
     agg_dict.update({"Total Tips Collected": total_tips})
-    agg_dict.update({"Total Customers Who Tipped": customer_tip_count})
+    agg_dict.update({"Total Customers Who Tipped": count_customers_who_tipped})
     agg_dict.update({"Total Sales": total_sales})
     agg_dict.update({"Total Fees": total_fees})
     agg_dict.update({"Total Paid in Cash": total_cash_collected})
@@ -465,27 +304,11 @@ def get_aggs(orders_list, timeframe) -> dict:
     return agg_dict
 
 
-def access_order_data(order) -> dict:
-    '''
-    
 
-    Parameters
-    ----------
-    order : dict
-        shopify order dictionary.
-
-    Returns
-    -------
-    dict
-        data dict from individual order.
-
-    '''
-    
-    return order["data"]["orders"]["nodes"][0]
 
 def get_transaction_gateway(order):
     
-    data = access_order_data(order)
+    data = get_order_data(order)
     
     # some have empty transactions
     if not data["transactions"]:
@@ -521,7 +344,7 @@ def orders_to_df(orders_list):
     data_list = []
     
     for index, order in enumerate(orders_list):
-        data_list.append(access_order_data(order))
+        data_list.append(get_order_data(order))
         
     return pd.DataFrame(data_list)
 
@@ -621,7 +444,7 @@ def get_time_of_order(order):
     '''
     
     # utc is 8hrs ahead of pst
-    utc = datetime.strptime(access_order_data(order)["processedAt"], '%Y-%m-%dT%H:%M:%SZ')
+    utc = datetime.strptime(get_order_data(order)["processedAt"], '%Y-%m-%dT%H:%M:%SZ')
     pst = utc - timedelta(hours=8, minutes=0)
     
     return pst
@@ -664,8 +487,12 @@ SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 #%%
 
 data_path = "./data/"
-november_orders = read_json(data_path, "november_orders", ".json")
 december_orders = read_json(data_path, "december_orders", ".json")
+
+#%%
+
+# get all items available in the time period
+
 
 #%%
 
@@ -681,23 +508,14 @@ collabs = [
               {"collab_timeframe":"2022-12-04,2022-12-04", "collab_name":"100% of Hot Chocolate and Beans Go to Blackdog"}       
           ]
 
-november_orders = add_event_variables(november_orders, events)
 december_orders = add_event_variables(december_orders, events)
 
-november_orders = add_collab_variables(november_orders, collabs)
 december_orders = add_collab_variables(december_orders, collabs)
 
-
-nov = orders_to_df(november_orders)
 dec = orders_to_df(december_orders)
 
-#%%
-
-november_orders_aggs = get_aggs(november_orders, "2022-11-01,2022-11-30")
 december_orders_aggs = get_aggs(december_orders, "2022-12-01,2022-12-31")
 
 #%%
-
-
 
 cherry_aggs = get_aggs(december_orders, "2022-12-18,2022-12-18")
