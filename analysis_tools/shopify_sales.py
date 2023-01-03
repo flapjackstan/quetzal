@@ -21,9 +21,7 @@ import shopify
 import pandas as pd
 
 from datetime import datetime, timedelta
-from analysis_tools.shopify_api import read_json, get_line_items, get_count_orders, get_count_of_product, get_order_data
-
-#%%
+from analysis_tools.shopify_api import read_json, get_line_items, get_count_orders, get_count_of_product, get_order_data, get_items_available
 
 
 def is_void(order) -> bool:
@@ -491,8 +489,8 @@ december_orders = read_json(data_path, "december_orders", ".json")
 
 #%%
 
-# get all items available in the time period
-
+    
+items_available = get_items_available(december_orders)
 
 #%%
 
