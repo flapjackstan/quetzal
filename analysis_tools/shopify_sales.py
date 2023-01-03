@@ -21,6 +21,9 @@ import json
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta
+from shopify_api import read_json
+
+#%%
 
 def read_file_as_text(path) -> str:
     """
@@ -186,33 +189,6 @@ def write_file(obj, path, filename, ext) -> None:
 
     with open(write_path.joinpath(filename + ext), "w+") as f:
         json.dump(obj, f)
-        
-
-def read_json(path, filename, ext) -> dict:
-    '''
-    
-    Parameters
-    ----------
-    path : Path object
-        Path object / destination.
-    filename : str
-        Name of file to write
-    ext : str
-        File type extension.
-
-    Returns
-    -------
-    dict
-        json converted to dictionary
-
-    '''
-    
-    read_path = Path(path)
-    
-    with open(read_path.joinpath(filename + ext)) as json_file:
-        data = json.load(json_file)
-        
-    return json.loads(data)
 
 
 def is_void(order) -> bool:
