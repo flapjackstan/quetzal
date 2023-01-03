@@ -23,7 +23,8 @@ authors = [
 ]
 packages = [
 	{ include = "spatial_tools/census_api.py" },
-        { include = "analysis_tools/venmo.py"}
+    { include = "analysis_tools/venmo_sales.py"},
+    { include = "analysis_tools/shopify_api.py"}
 ]
 
 [tool.poetry.dependencies]
