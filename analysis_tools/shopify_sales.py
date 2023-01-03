@@ -402,7 +402,28 @@ def get_fee(order) -> float:
     return float(data["transactions"][0]["fees"][0]["amount"]["amount"])
 
 
-def get_aggs(orders_list) -> dict:
+def get_timeframe(timeframe_str) -> list:
+    '''
+    
+
+    Parameters
+    ----------
+    timeframe_str : str
+        timeframe split by comma.
+
+    Returns
+    -------
+    list
+        List with start timeframe and end timeframe.
+
+    '''
+    
+    timeframe = timeframe_str.split(',')
+    timeframe = [datetime.strptime(x, '%Y-%m-%d') for x in timeframe]
+    
+    return timeframe
+
+def get_aggs(orders_list, timeframe) -> dict:
     '''
 
     Parameters
@@ -417,6 +438,8 @@ def get_aggs(orders_list) -> dict:
 
     '''
     
+    timeframe = get_timeframe(timeframe)
+    
     agg_dict = {}
     
     total_tips = 0
@@ -428,25 +451,29 @@ def get_aggs(orders_list) -> dict:
     
     for index, order in enumerate(orders_list):
         
-        # TIPS CALCULATION
-        tip_amount = get_order_tips(order)
+        pst = get_time_of_order(order)
         
-        if tip_amount > 0:
-            customer_tip_count = customer_tip_count + 1
+        print(pst.date())
+        
+        if timeframe[0].date() <= pst.date() <= timeframe[1].date():
+        
+            # TIPS CALCULATION
+            tip_amount = get_order_tips(order)
             
-        total_tips = total_tips + tip_amount
+            if tip_amount > 0:
+                customer_tip_count = customer_tip_count + 1
+                
+            total_tips = total_tips + tip_amount
+                
+            # MONEY COLLECTED AND FEES
             
-        # MONEY COLLECTED AND FEES
-        
-        total_collected = total_collected + get_order_total_collected(order)
-        total_fees = total_fees + get_fee(order)
-
-        total_cash_collected = total_cash_collected + get_cash_collected(order)
-        
-        
-        
-        # SIMPLE COUNT OF ORDERS
-        order_count = order_count + 1
+            total_collected = total_collected + get_order_total_collected(order)
+            total_fees = total_fees + get_fee(order)
+    
+            total_cash_collected = total_cash_collected + get_cash_collected(order)
+            
+            # SIMPLE COUNT OF ORDERS
+            order_count = order_count + 1
         
     total_sales = total_collected - total_tips
         
@@ -522,7 +549,106 @@ def orders_to_df(orders_list):
         
     return pd.DataFrame(data_list)
 
+
+def add_event_variables(order_list, events) -> list:
+    '''
+
+    Parameters
+    ----------
+    orders_list : list
+        Shopify orders list
+        
+    events : dict
+        dictionary of dates: event name
+
+    Returns
+    -------
+    orders_list : list
+        Shopify orders list with added event variable and product collab variables
+
+    '''
     
+    mod_order_list = []
+    
+    for index, order in enumerate(order_list):
+
+        pst = get_time_of_order(order)
+        pst_str = pst.strftime('%Y-%m-%d')
+   
+        # I can use a hashmap method here because no transformation to keys are needed
+        try:
+            order["data"]["orders"]["nodes"][0]["event"] = events[pst_str]
+        except KeyError:
+            order["data"]["orders"]["nodes"][0]["event"] = "Non Event"
+            
+        mod_order_list.append(order)
+        
+    return mod_order_list
+        
+def add_collab_variables(order_list, collabs) -> list:
+    '''
+    TODO
+    write docstring for collabs
+    write access funcs for each variable
+    
+    Parameters
+    ----------
+    orders_list : list
+        Shopify orders list
+        
+    events : dict
+        dictionary of dates: event name
+
+    Returns
+    -------
+    orders_list : list
+        Shopify orders list with added event variable and product collab variables
+
+    '''
+    
+    mod_order_list = []
+    
+    for index, order in enumerate(order_list):
+        
+        order["data"]["orders"]["nodes"][0]["collab"] = "No Collaboration"
+
+        pst = get_time_of_order(order)
+        
+        # Will probably have to do this by product and date, not just date
+        for index, collab in enumerate(collabs):
+            timeframe = get_timeframe(collab["collab_timeframe"])
+
+            # this needs a conditional that checks if varable exists and if it has another event name already (none or no collaboration ok)
+            if timeframe[0].date() <= pst.date() <= timeframe[1].date() and order["data"]["orders"]["nodes"][0]["collab"] == "No Collaboration":
+                order["data"]["orders"]["nodes"][0]["collab"] = collab["collab_name"]
+                
+            
+        mod_order_list.append(order)
+        
+    return mod_order_list
+
+
+def get_time_of_order(order):
+    '''
+    
+
+    Parameters
+    ----------
+    order : dict
+        Shopify order
+
+    Returns
+    -------
+    date : dt
+    datetime obj in pst
+
+    '''
+    
+    # utc is 8hrs ahead of pst
+    utc = datetime.strptime(access_order_data(order)["processedAt"], '%Y-%m-%dT%H:%M:%SZ')
+    pst = utc - timedelta(hours=8, minutes=0)
+    
+    return pst
 
 
 #%% Constants
@@ -535,13 +661,6 @@ SHOP_NAME = "tazacafe"
 API_VERSION = '2022-10'
 
 SHOP_URL = f"{SHOP_NAME}.myshopify.com"
-
-events = {"Compton Farmers Market":"2022-11-05",
-          "USC Trojan Market":"2022-11-15",
-          "DTSA: Santora Artwalk":"2022-12-03",
-          "Ten Mile Brewery":"2022-12-04",          
-          "Cherry Co. Farmers Market":"2022-12-18"
-          }
 
 
 #%% Example Filter Query
