@@ -489,29 +489,49 @@ SHOP_URL = f"{SHOP_NAME}.myshopify.com"
 
 data_path = "./data/"
 december_orders = read_json(data_path, "december_orders", ".json")
+november_orders = read_json(data_path, "november_orders", ".json")
+
+# #%%
+
+# events = {"2022-11-05":"Compton Farmers Market",
+#           "2022-11-15":"USC Trojan Market",
+#           "2022-12-03":"DTSA: Santora Artwalk",
+#           "2022-12-04":"Ten Mile Brewery",          
+#           "2022-12-18":"Cherry Co. Farmers Market"
+#           }
+
+# collabs = [
+#               {"collab_timeframe":"2022-12-03,2022-12-03", "collab_name":"16% of Can Sales Buy Toys"},
+#               {"collab_timeframe":"2022-12-04,2022-12-04", "collab_name":"100% of Hot Chocolate and Beans Go to Blackdog"}       
+#           ]
+
+# # this func needs to accept below format
+# december_orders = add_event_variables(december_orders, events)
+
+# december_orders = add_collab_variables(december_orders, collabs)
+
+# dec = orders_to_df(december_orders)
+
+# december_orders_aggs = get_aggs(december_orders, "2022-12-01,2022-12-31")
 
 #%%
 
-events = {"2022-11-05":"Compton Farmers Market",
-          "2022-11-15":"USC Trojan Market",
-          "2022-12-03":"DTSA: Santora Artwalk",
-          "2022-12-04":"Ten Mile Brewery",          
-          "2022-12-18":"Cherry Co. Farmers Market"
-          }
+# one above needs to be changed to this format
+dec_events = {
+    0:{"timeframe":"2022-12-03,2022-12-03", "event name":"DTSA: Santora Artwalk", "cost of event" : 0},
+    1:{"timeframe":"2022-12-04,2022-12-04", "event name":"Ten Mile Brewery", "cost of event" : 0},          
+    2:{"timeframe":"2022-12-18,2022-12-18", "event name":"Cherry Co. Farmers Market", "cost of event" : 35}
+    }
 
-collabs = [
-              {"collab_timeframe":"2022-12-03,2022-12-03", "collab_name":"16% of Can Sales Buy Toys"},
-              {"collab_timeframe":"2022-12-04,2022-12-04", "collab_name":"100% of Hot Chocolate and Beans Go to Blackdog"}       
-          ]
+for index, event in enumerate(dec_events):
+    dec_events[index]["aggs"] = get_aggs(december_orders, dec_events[index]["timeframe"])
+    
+# one above needs to be changed to this format
+nov_events = {
+    0:{"timeframe":"2022-11-05,2022-11-05", "event name":"Compton Farmers Market"},
+    1:{"timeframe":"2022-11-15,2022-11-15", "event name":"USC Trojan Market"}
+    }
 
-december_orders = add_event_variables(december_orders, events)
-
-december_orders = add_collab_variables(december_orders, collabs)
-
-dec = orders_to_df(december_orders)
-
-december_orders_aggs = get_aggs(december_orders, "2022-12-01,2022-12-31")
-
-#%%
-
-cherry_aggs = get_aggs(december_orders, "2022-12-18,2022-12-18")
+for index, event in enumerate(nov_events):
+    nov_events[index]["aggs"] = get_aggs(november_orders, nov_events[index]["timeframe"])
+    
