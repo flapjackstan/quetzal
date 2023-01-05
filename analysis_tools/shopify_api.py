@@ -227,6 +227,8 @@ def get_count_orders(order) -> int:
     line_items = get_line_items(order)
     return len(line_items)
 
+
+# do this for gross sales. look at #1087, original total unit price set
 def get_count_of_product(order, product) -> int:
     line_items = get_line_items(order)
     product_count = 0
