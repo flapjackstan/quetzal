@@ -9,8 +9,6 @@ Created on Thu Jan  5 03:01:43 2023
 import pandas as pd
 import geopandas as gpd
 import folium
-from census import Census
-from us import states
 from spatial_tools.census_api import getCounties, xy_to_points
 from analysis_tools.shopify_api import read_json, get_aggs
 
@@ -35,9 +33,18 @@ dec_events = pd.read_csv("./data/december_events.csv")
 dec_events["lat"] = dec_events['coords'].apply(lambda x: split_coords_to_lat_long(x)[0])
 dec_events["long"] = dec_events['coords'].apply(lambda x: split_coords_to_lat_long(x)[1])
 
-dec_events = xy_to_points(dec_events, "long", "lat")
 
+dec_events = dec_events.to_dict('index')
+
+for index, event in enumerate(dec_events):
+    dec_events[index]["aggs"] = get_aggs(december_orders, dec_events[index]["timeframe"])
+    
+dec_events = pd.DataFrame.from_dict(dec_events, orient='index')
+
+dec_events = dec_events.join(pd.json_normalize(dec_events.pop('aggs')))
 #%%
+
+dec_events = xy_to_points(dec_events, "long", "lat")
 
 ca_tracts = gpd.read_file("https://www2.census.gov/geo/tiger/TIGER2022/TRACT/tl_2022_06_tract.zip")
 
@@ -54,6 +61,3 @@ polygon_and_points_map = dec_events.explore(m=polygon_map, color="#a31010", name
 folium.TileLayer("CartoDB positron", control=True).add_to(polygon_and_points_map)
 folium.LayerControl().add_to(polygon_and_points_map)
 polygon_and_points_map.save("map.html")
-
-# for index, event in enumerate(dec_events):
-#     dec_events[index]["aggs"] = get_aggs(december_orders, dec_events[index]["timeframe"])
