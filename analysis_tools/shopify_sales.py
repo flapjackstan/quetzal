@@ -523,15 +523,7 @@ dec_events = {
     2:{"timeframe":"2022-12-18,2022-12-18", "event name":"Cherry Co. Farmers Market", "cost of event" : 35, "address": "211 Avenida Del Norte, Redondo Beach, CA 90277", "coords": "33.8184134,-118.389958"}
     }
 
+dec_events_copy = pd.read_csv("./data/december_events.csv")
+
 for index, event in enumerate(dec_events):
     dec_events[index]["aggs"] = get_aggs(december_orders, dec_events[index]["timeframe"])
-    
-# one above needs to be changed to this format
-nov_events = {
-    0:{"timeframe":"2022-11-05,2022-11-05", "event name":"Compton Farmers Market"},
-    1:{"timeframe":"2022-11-15,2022-11-15", "event name":"USC Trojan Market"}
-    }
-
-for index, event in enumerate(nov_events):
-    nov_events[index]["aggs"] = get_aggs(november_orders, nov_events[index]["timeframe"])
-    
